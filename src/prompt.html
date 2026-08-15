@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>DeepSeek Harness</title>
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #0f1115;
+    color: #e6e8ee;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+  .wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px 20px 16px;
+    height: 100%;
+    box-sizing: border-box;
+  }
+  label { font-size: 13px; color: #b8bcc8; }
+  input {
+    padding: 8px 10px;
+    border: 1px solid rgba(127, 127, 127, .45);
+    border-radius: 6px;
+    background: #161920;
+    color: #e6e8ee;
+    font-size: 13px;
+    outline: none;
+  }
+  input:focus { border-color: #7aa2ff; }
+  .row { display: flex; justify-content: flex-end; gap: 8px; margin-top: auto; }
+  button {
+    padding: 6px 16px;
+    border: 1px solid rgba(127, 127, 127, .45);
+    border-radius: 6px;
+    background: transparent;
+    color: #e6e8ee;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button.primary { background: #3457d5; border-color: #3457d5; }
+  button:hover { filter: brightness(1.1); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <label id="label"></label>
+  <input id="value" spellcheck="false" autocomplete="off">
+  <div class="row">
+    <button id="cancel">取消</button>
+    <button id="ok" class="primary">确定</button>
+  </div>
+</div>
+<script>
+  const { ipcRenderer } = require("electron");
+  const params = new URLSearchParams(location.search);
+  document.title = params.get("title") || "DeepSeek Harness";
+  document.getElementById("label").textContent = params.get("label") || "";
+  const input = document.getElementById("value");
+  input.placeholder = params.get("placeholder") || "";
+  let settled = false;
+  const finish = (value) => {
+    if (settled) return;
+    settled = true;
+    ipcRenderer.send("dsh:prompt-submit", value);
+  };
+  document.getElementById("ok").addEventListener("click", () => finish(input.value));
+  document.getElementById("cancel").addEventListener("click", () => finish(null));
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") finish(input.value);
+    if (e.key === "Escape") finish(null);
+  });
+  input.focus();
+</script>
+</body>
+</html>
