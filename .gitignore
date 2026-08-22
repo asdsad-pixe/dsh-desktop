@@ -3,6 +3,9 @@ node_modules/
 dist/
 *.log
 
+# 升级临时目录
+.upgrade-tmp/
+
 # 系统与编辑器杂物
 Thumbs.db
 desktop.ini

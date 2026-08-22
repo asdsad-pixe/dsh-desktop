@@ -13,6 +13,7 @@ import { createRequire } from "node:module";
 import { mkdirSync, copyFileSync, existsSync, createWriteStream, writeFileSync, readFileSync } from "node:fs";
 import path from "node:path";
 import http from "node:http";
+import { checkForUpdates } from "./updater.js";
 
 const require = createRequire(import.meta.url);
 
@@ -477,6 +478,61 @@ function setupMenu() {
         { label: "移除插件…", click: () => void removePluginFlow() },
         { type: "separator" },
         { label: "重启 dsh 服务", click: () => void restartServer() },
+      ],
+    },
+    {
+      label: "帮助",
+      submenu: [
+        {
+          label: "检查更新…",
+          click: () => void checkForUpdates(mainWindow),
+        },
+        {
+          label: "检查上游内核更新",
+          click: () => {
+            const { execFile } = require("node:child_process");
+            const script = path.join(app.getAppPath(), "scripts", "check-upstream.mjs");
+            // 用本 exe 以纯 Node 模式执行脚本（打包后没有外部 node 可用）。
+            execFile(
+              process.execPath,
+              [script],
+              {
+                cwd: app.getAppPath(),
+                env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
+                timeout: 60_000,
+              },
+              (err, stdout, stderr) => {
+                if (err) {
+                  dialog.showErrorBox("检查失败", (stderr || String(err)).slice(-2000));
+                } else {
+                  dialog.showMessageBox(mainWindow, {
+                    type: "info",
+                    title: "上游内核检查",
+                    message: "检查结果",
+                    detail: (stdout || "(无输出)").slice(-3000),
+                  });
+                }
+              }
+            );
+          },
+        },
+        { type: "separator" },
+        {
+          label: "关于",
+          click: () => {
+            dialog.showMessageBox(mainWindow, {
+              type: "info",
+              title: "关于 DeepSeek Harness",
+              message: "DeepSeek Harness Desktop",
+              detail:
+                "版本: " + app.getVersion() + "\n" +
+                "Electron: " + process.versions.electron + "\n" +
+                "Node: " + process.versions.node + "\n" +
+                "Chrome: " + process.versions.chrome + "\n\n" +
+                "基于 DeepSeek Harness 内核的独立桌面版。",
+            });
+          },
+        },
       ],
     },
   ]);
